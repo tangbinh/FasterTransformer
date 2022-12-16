@@ -82,18 +82,18 @@ class GPTWeights(object):
         self.int8_w = []
         self.scale = []
         # Transformer blocks
-        self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # self_layernorm_gamma
-        self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # self_layernorm_beta
-        self.w.extend([torch.zeros(global_hidden_units, local_hidden_units * 3)] * layer_num)   # self_kernel
-        self.w.extend([torch.zeros(local_hidden_units * 3)] * layer_num)   # self_bias
-        self.w.extend([torch.zeros(local_hidden_units, global_hidden_units)] * layer_num)   # self_output_kernel
-        self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # self_output_bias
-        self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # ffn_layernorm_gamma
-        self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # ffn_layernorm_beta
-        self.w.extend([torch.zeros(global_hidden_units, local_inter_size)] * layer_num)   # ffn_kernel1
-        self.w.extend([torch.zeros(local_inter_size)] * layer_num)   # ffn_bias1
-        self.w.extend([torch.zeros(local_inter_size, global_hidden_units)] * layer_num)   # ffn_kernel2
-        self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # ffn_bias2
+        self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # self_layernorm_gamma
+        self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # self_layernorm_beta
+        self.w.extend([torch.zeros(global_hidden_units, local_hidden_units * 3, device="meta")] * layer_num)   # self_kernel
+        self.w.extend([torch.zeros(local_hidden_units * 3, device="meta")] * layer_num)   # self_bias
+        self.w.extend([torch.zeros(local_hidden_units, global_hidden_units, device="meta")] * layer_num)   # self_output_kernel
+        self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # self_output_bias
+        self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # ffn_layernorm_gamma
+        self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # ffn_layernorm_beta
+        self.w.extend([torch.zeros(global_hidden_units, local_inter_size, device="meta")] * layer_num)   # ffn_kernel1
+        self.w.extend([torch.zeros(local_inter_size, device="meta")] * layer_num)   # ffn_bias1
+        self.w.extend([torch.zeros(local_inter_size, global_hidden_units, device="meta")] * layer_num)   # ffn_kernel2
+        self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # ffn_bias2
         # After Transformer blocks
         if self.has_post_decoder_layernorm:
             self.w.append(torch.zeros(global_hidden_units))   # layernorm_gamma
@@ -103,36 +103,36 @@ class GPTWeights(object):
         self.w.append(torch.zeros(vocab_size, global_hidden_units))   # embedding_kernel
         # adapters
         if self.has_adapters:
-            self.w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size)] * layer_num)   # adaptor1_kernel1
-            self.w.extend([torch.zeros(local_adapter_inter_size)] * layer_num)   # adaptor1_bias1
-            self.w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units)] * layer_num)   # adaptor1_kernel2
-            self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # adaptor1_bias2
-            self.w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size)] * layer_num)   # adaptor2_kernel1
-            self.w.extend([torch.zeros(local_adapter_inter_size)] * layer_num)   # adaptor2_bias1
-            self.w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units)] * layer_num)   # adaptor2_kernel2
-            self.w.extend([torch.zeros(global_hidden_units)] * layer_num)   # adaptor2_bias2
+            self.w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size, device="meta")] * layer_num)   # adaptor1_kernel1
+            self.w.extend([torch.zeros(local_adapter_inter_size, device="meta")] * layer_num)   # adaptor1_bias1
+            self.w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units, device="meta")] * layer_num)   # adaptor1_kernel2
+            self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # adaptor1_bias2
+            self.w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size, device="meta")] * layer_num)   # adaptor2_kernel1
+            self.w.extend([torch.zeros(local_adapter_inter_size, device="meta")] * layer_num)   # adaptor2_bias1
+            self.w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units, device="meta")] * layer_num)   # adaptor2_kernel2
+            self.w.extend([torch.zeros(global_hidden_units, device="meta")] * layer_num)   # adaptor2_bias2
 
         # Initialization
         self._map(lambda w: torch.nn.init.normal_(w, mean=0., std=1.))
 
         if (self.int8_mode != 0):
-            self.int8_w.extend([torch.zeros(global_hidden_units, local_hidden_units * 3, dtype=torch.int8)] * layer_num)   # self_int8_kernel
-            self.scale.extend([torch.zeros(local_hidden_units * 3, dtype=torch.float)] * layer_num)   # self_scale
-            self.int8_w.extend([torch.zeros(local_hidden_units, global_hidden_units, dtype=torch.int8)] * layer_num)   # self_output_int8_kernel
-            self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float)] * layer_num)   # self_output_scale
-            self.int8_w.extend([torch.zeros(global_hidden_units, local_inter_size, dtype=torch.int8)] * layer_num)   # ffn_int8_kernel1
-            self.scale.extend([torch.zeros(local_inter_size, dtype=torch.float)] * layer_num)   # ffn_scale1
-            self.int8_w.extend([torch.zeros(local_inter_size, global_hidden_units, dtype=torch.int8)] * layer_num)   # ffn_int8_kernel2
-            self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float)] * layer_num)   # ffn_scale2
+            self.int8_w.extend([torch.zeros(global_hidden_units, local_hidden_units * 3, dtype=torch.int8, device="meta")] * layer_num)   # self_int8_kernel
+            self.scale.extend([torch.zeros(local_hidden_units * 3, dtype=torch.float, device="meta")] * layer_num)   # self_scale
+            self.int8_w.extend([torch.zeros(local_hidden_units, global_hidden_units, dtype=torch.int8, device="meta")] * layer_num)   # self_output_int8_kernel
+            self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float, device="meta")] * layer_num)   # self_output_scale
+            self.int8_w.extend([torch.zeros(global_hidden_units, local_inter_size, dtype=torch.int8, device="meta")] * layer_num)   # ffn_int8_kernel1
+            self.scale.extend([torch.zeros(local_inter_size, dtype=torch.float, device="meta")] * layer_num)   # ffn_scale1
+            self.int8_w.extend([torch.zeros(local_inter_size, global_hidden_units, dtype=torch.int8, device="meta")] * layer_num)   # ffn_int8_kernel2
+            self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float, device="meta")] * layer_num)   # ffn_scale2
             if self.has_adapters:
-                self.int8_w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size, dtype=torch.int8)] * layer_num)   # adaptor1_int8_kernel1
-                self.scale.extend([torch.zeros(local_adapter_inter_size, dtype=torch.float)] * layer_num)   # adaptor1_scale1
-                self.int8_w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units, dtype=torch.int8)] * layer_num)   # adaptor1_int8_kernel2
-                self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float)] * layer_num)   # adaptor1_scale2
-                self.int8_w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size, dtype=torch.int8)] * layer_num)   # adaptor2_int8_kernel1
-                self.scale.extend([torch.zeros(local_adapter_inter_size, dtype=torch.float)] * layer_num)   # adaptor2_scale1
-                self.int8_w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units, dtype=torch.int8)] * layer_num)   # adaptor2_int8_kernel2
-                self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float)] * layer_num)   # adaptor2_scale2
+                self.int8_w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size, dtype=torch.int8, device="meta")] * layer_num)   # adaptor1_int8_kernel1
+                self.scale.extend([torch.zeros(local_adapter_inter_size, dtype=torch.float, device="meta")] * layer_num)   # adaptor1_scale1
+                self.int8_w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units, dtype=torch.int8, device="meta")] * layer_num)   # adaptor1_int8_kernel2
+                self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float, device="meta")] * layer_num)   # adaptor1_scale2
+                self.int8_w.extend([torch.zeros(global_hidden_units, local_adapter_inter_size, dtype=torch.int8, device="meta")] * layer_num)   # adaptor2_int8_kernel1
+                self.scale.extend([torch.zeros(local_adapter_inter_size, dtype=torch.float, device="meta")] * layer_num)   # adaptor2_scale1
+                self.int8_w.extend([torch.zeros(local_adapter_inter_size, global_hidden_units, dtype=torch.int8, device="meta")] * layer_num)   # adaptor2_int8_kernel2
+                self.scale.extend([torch.zeros(global_hidden_units, dtype=torch.float, device="meta")] * layer_num)   # adaptor2_scale2
 
     def __getitem__(self, idx):
         return self.w[idx]
@@ -339,7 +339,7 @@ class GPT(nn.Module):
         self.pipeline_para_rank = self.rank // self.tensor_para_size
 
         # Create and copy model to the device.
-        self.cuda()
+        # self.cuda()
 
     def load(self, ckpt_path):
         is_load = self.weights.load(ckpt_path, tensor_para_rank=self.tensor_para_rank,

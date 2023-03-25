@@ -77,10 +77,9 @@ option(SPARSITY_SUPPORT "Build project with Ampere sparsity feature support" OFF
 option(BUILD_FAST_MATH "Build in fast math mode" ON)
 
 if(BUILD_MULTI_GPU)
-  message(STATUS "Add DBUILD_MULTI_GPU, requires MPI and NCCL")
+  message(STATUS "Add DBUILD_MULTI_GPU, requires NCCL")
   add_definitions("-DBUILD_MULTI_GPU")
   set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
-  find_package(MPI REQUIRED)
   find_package(NCCL REQUIRED)
   set(CMAKE_MODULE_PATH "") # prevent the bugs for pytorch building
 endif()
@@ -282,8 +281,8 @@ print(torch._C._GLIBCXX_USE_CXX11_ABI,end='');"
 endif()
 
 if (BUILD_MULTI_GPU)
-  list(APPEND COMMON_HEADER_DIRS ${MPI_INCLUDE_PATH})
-  list(APPEND COMMON_LIB_DIRS /usr/local/mpi/lib)
+  list(APPEND COMMON_HEADER_DIRS)
+  list(APPEND COMMON_LIB_DIRS /fsx/binhtang/.local/miniconda3/envs/faster/lib)
 endif()
 
 if(USE_TRITONSERVER_DATATYPE)
@@ -320,7 +319,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:BeamSearchLayer>
   $<TARGET_OBJECTS:Bert>
   $<TARGET_OBJECTS:BertLayerWeight>
-  $<TARGET_OBJECTS:BertTritonBackend>
   $<TARGET_OBJECTS:BertWeight>
   $<TARGET_OBJECTS:DecoderCrossAttentionLayer>
   $<TARGET_OBJECTS:DecoderSelfAttentionLayer>
@@ -329,16 +327,13 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:FusedAttentionLayer>
   $<TARGET_OBJECTS:GptContextAttentionLayer>
   $<TARGET_OBJECTS:GptJ>
-  $<TARGET_OBJECTS:GptJContextDecoder>
   $<TARGET_OBJECTS:GptJDecoder>
   $<TARGET_OBJECTS:GptJDecoderLayerWeight>
-  $<TARGET_OBJECTS:GptJTritonBackend>
   $<TARGET_OBJECTS:GptJWeight>
   $<TARGET_OBJECTS:GptNeoX>
   $<TARGET_OBJECTS:GptNeoXContextDecoder>
   $<TARGET_OBJECTS:GptNeoXDecoder>
   $<TARGET_OBJECTS:GptNeoXDecoderLayerWeight>
-  $<TARGET_OBJECTS:GptNeoXTritonBackend>
   $<TARGET_OBJECTS:GptNeoXWeight>
   $<TARGET_OBJECTS:LinearAdapterLayer>
   $<TARGET_OBJECTS:OnlineBeamSearchLayer>
@@ -346,14 +341,11 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:ParallelGptContextDecoder>
   $<TARGET_OBJECTS:ParallelGptDecoder>
   $<TARGET_OBJECTS:ParallelGptDecoderLayerWeight>
-  $<TARGET_OBJECTS:ParallelGptTritonBackend>
   $<TARGET_OBJECTS:ParallelGptWeight>
   $<TARGET_OBJECTS:T5Common>
   $<TARGET_OBJECTS:T5Decoder>
   $<TARGET_OBJECTS:T5Decoding>
   $<TARGET_OBJECTS:T5Encoder>
-  $<TARGET_OBJECTS:T5TritonBackend>
-  $<TARGET_OBJECTS:T5EncoderTritonBackend>
   $<TARGET_OBJECTS:TensorParallelDecoderCrossAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelGeluFfnLayer>
@@ -363,7 +355,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:TensorParallelUnfusedAttentionLayer>
   $<TARGET_OBJECTS:TopKSamplingLayer>
   $<TARGET_OBJECTS:TopPSamplingLayer>
-  $<TARGET_OBJECTS:TransformerTritonBackend>
   $<TARGET_OBJECTS:UnfusedAttentionLayer>
   $<TARGET_OBJECTS:activation_int8_kernels>
   $<TARGET_OBJECTS:activation_kernels>
@@ -399,7 +390,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:memory_utils>
   $<TARGET_OBJECTS:moe_gemm_kernels>
   $<TARGET_OBJECTS:moe_kernels>
-  $<TARGET_OBJECTS:mpi_utils>
   $<TARGET_OBJECTS:nccl_utils>
   $<TARGET_OBJECTS:nvtx_utils>
   $<TARGET_OBJECTS:online_softmax_beamsearch_kernels>
@@ -418,7 +408,6 @@ add_library(transformer-shared SHARED
 
 if (BUILD_MULTI_GPU)
 target_link_libraries(transformer-shared PUBLIC
-  -lmpi
   ${NCCL_LIBRARIES}
 )
 endif()
@@ -440,7 +429,6 @@ target_link_libraries(transformer-shared PUBLIC
   $<TARGET_OBJECTS:GptFP8ContextDecoder>
   $<TARGET_OBJECTS:GptFP8Decoder>
   $<TARGET_OBJECTS:GptFP8DecoderLayerWeight>
-  $<TARGET_OBJECTS:ParallelGptFP8TritonBackend>
   $<TARGET_OBJECTS:GptFP8Weight>
   $<TARGET_OBJECTS:SelfAttentionFP8Layer>
   $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionFP8Layer>
@@ -458,7 +446,7 @@ endif()
 set_target_properties(transformer-shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(transformer-shared PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 set_target_properties(transformer-shared PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(transformer-shared PUBLIC -lcudart -lcublas -lcublasLt -lcurand)
+target_link_libraries(transformer-shared PUBLIC -L /fsx/binhtang/.local/miniconda3/envs/faster/lib -lcudart -lcublas -lcublasLt -lcurand)
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/FasterTransformer)

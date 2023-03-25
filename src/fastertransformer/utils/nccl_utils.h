@@ -18,11 +18,11 @@
 
 #include "src/fastertransformer/utils/cuda_utils.h"
 #include "src/fastertransformer/utils/logger.h"
-#include "src/fastertransformer/utils/mpi_utils.h"
+// #include "src/fastertransformer/utils/mpi_utils.h"
 
 #include <cuda_runtime.h>
 #ifdef BUILD_MULTI_GPU
-#include <mpi.h>
+// #include <mpi.h>
 #include <nccl.h>
 #endif
 #include <stdio.h>

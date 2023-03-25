@@ -13,13 +13,3 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.8)
-
-set(bert_triton_backend_files
-    BertTritonModel.cc
-    BertTritonModelInstance.cc
-)
-
-add_library(BertTritonBackend STATIC ${bert_triton_backend_files})
-set_property(TARGET BertTritonBackend PROPERTY POSITION_INDEPENDENT_CODE  ON)
-target_link_libraries(BertTritonBackend PRIVATE Bert TransformerTritonBackend -lcublasLt)
-target_compile_features(BertTritonBackend PRIVATE cxx_std_14)

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(bert)
 add_subdirectory(bert_int8)
 add_subdirectory(decoding)
 add_subdirectory(gpt)
@@ -26,7 +25,6 @@ add_subdirectory(wenet)
 
 add_subdirectory(gptj)
 add_subdirectory(gptneox)
-add_subdirectory(multi_gpu_gpt)
 
 if(ENABLE_FP8)
     add_subdirectory(gpt_fp8)

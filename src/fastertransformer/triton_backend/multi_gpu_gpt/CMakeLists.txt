@@ -13,13 +13,3 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.8)
-
-set(parallel_gpt_triton_backend_files
-    ParallelGptTritonModel.cc
-    ParallelGptTritonModelInstance.cc
-)
-
-add_library(ParallelGptTritonBackend STATIC ${parallel_gpt_triton_backend_files})
-set_property(TARGET ParallelGptTritonBackend PROPERTY POSITION_INDEPENDENT_CODE  ON)
-target_link_libraries(ParallelGptTritonBackend PRIVATE TransformerTritonBackend ParallelGpt -lcublasLt)
-target_compile_features(ParallelGptTritonBackend PRIVATE cxx_std_14)

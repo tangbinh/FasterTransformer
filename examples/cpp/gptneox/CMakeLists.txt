@@ -11,12 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-add_executable(gptneox_example gptneox_example.cc)
-target_link_libraries(gptneox_example PUBLIC -lcublas -lcublasLt -lcudart
-                      GptNeoX mpi_utils nccl_utils nvtx_utils gpt_example_utils word_list)
-
-add_executable(gptneox_triton_example gptneox_triton_example.cc)
-target_link_libraries(gptneox_triton_example PUBLIC -lcublas -lcublasLt -lcudart
-                      GptNeoXTritonBackend TransformerTritonBackend custom_ar_comm
-                      mpi_utils nccl_utils gpt_example_utils word_list -lpthread nvtx_utils)

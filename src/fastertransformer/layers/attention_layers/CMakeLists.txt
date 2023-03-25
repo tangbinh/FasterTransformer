@@ -73,9 +73,3 @@ add_library(TensorParallelDisentangledAttentionLayer STATIC TensorParallelDisent
 set_property(TARGET TensorParallelDisentangledAttentionLayer PROPERTY POSITION_INDEPENDENT_CODE  ON)
 set_property(TARGET TensorParallelDisentangledAttentionLayer PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
 target_link_libraries(TensorParallelDisentangledAttentionLayer PUBLIC -lcudart DisentangledAttentionLayer nccl_utils)
-
-add_library(WindowAttention STATIC WindowAttention.cc)
-set_property(TARGET WindowAttention PROPERTY POSITION_INDEPENDENT_CODE  ON)
-set_property(TARGET WindowAttention PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS  ON)
-target_link_libraries(WindowAttention PUBLIC -lcublasLt -lcublas -lcudart transform_mask_kernels 
-    unfused_attention_kernels trt_fused_multi_head_attention reverse_roll_kernels activation_kernels normalize_kernels)

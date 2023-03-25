@@ -12,21 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(bert_int8)
-add_subdirectory(decoding)
 add_subdirectory(gpt)
-add_subdirectory(xlnet)
-add_subdirectory(swin)
-add_subdirectory(swin_int8)
-add_subdirectory(vit)
-add_subdirectory(vit_int8)
-
-add_subdirectory(wenet)
-
 add_subdirectory(gptj)
-add_subdirectory(gptneox)
-
-if(ENABLE_FP8)
-    add_subdirectory(gpt_fp8)
-    add_subdirectory(bert_fp8)
-endif()

@@ -282,7 +282,6 @@ endif()
 
 if (BUILD_MULTI_GPU)
   list(APPEND COMMON_HEADER_DIRS)
-  list(APPEND COMMON_LIB_DIRS /fsx/binhtang/.local/miniconda3/envs/faster/lib)
 endif()
 
 if(USE_TRITONSERVER_DATATYPE)
@@ -317,9 +316,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:BaseBeamSearchLayer>
   $<TARGET_OBJECTS:BaseSamplingLayer>
   $<TARGET_OBJECTS:BeamSearchLayer>
-  $<TARGET_OBJECTS:Bert>
-  $<TARGET_OBJECTS:BertLayerWeight>
-  $<TARGET_OBJECTS:BertWeight>
   $<TARGET_OBJECTS:DecoderCrossAttentionLayer>
   $<TARGET_OBJECTS:DecoderSelfAttentionLayer>
   $<TARGET_OBJECTS:DynamicDecodeLayer>
@@ -330,11 +326,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:GptJDecoder>
   $<TARGET_OBJECTS:GptJDecoderLayerWeight>
   $<TARGET_OBJECTS:GptJWeight>
-  $<TARGET_OBJECTS:GptNeoX>
-  $<TARGET_OBJECTS:GptNeoXContextDecoder>
-  $<TARGET_OBJECTS:GptNeoXDecoder>
-  $<TARGET_OBJECTS:GptNeoXDecoderLayerWeight>
-  $<TARGET_OBJECTS:GptNeoXWeight>
   $<TARGET_OBJECTS:LinearAdapterLayer>
   $<TARGET_OBJECTS:OnlineBeamSearchLayer>
   $<TARGET_OBJECTS:ParallelGpt>
@@ -342,10 +333,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:ParallelGptDecoder>
   $<TARGET_OBJECTS:ParallelGptDecoderLayerWeight>
   $<TARGET_OBJECTS:ParallelGptWeight>
-  $<TARGET_OBJECTS:T5Common>
-  $<TARGET_OBJECTS:T5Decoder>
-  $<TARGET_OBJECTS:T5Decoding>
-  $<TARGET_OBJECTS:T5Encoder>
   $<TARGET_OBJECTS:TensorParallelDecoderCrossAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionLayer>
   $<TARGET_OBJECTS:TensorParallelGeluFfnLayer>
@@ -384,7 +371,6 @@ add_library(transformer-shared SHARED
   $<TARGET_OBJECTS:layout_transformer_int8_kernels>
   $<TARGET_OBJECTS:logprob_kernels>
   $<TARGET_OBJECTS:logger>
-  $<TARGET_OBJECTS:longformer_kernels>
   $<TARGET_OBJECTS:matrix_transpose_kernels>
   $<TARGET_OBJECTS:matrix_vector_multiplication>
   $<TARGET_OBJECTS:memory_utils>
@@ -417,36 +403,11 @@ target_link_libraries(transformer-shared PUBLIC
   -lnvToolsExt
 )
 endif()
-  
-if (ENABLE_FP8)
-target_link_libraries(transformer-shared PUBLIC 
-  $<TARGET_OBJECTS:BertFP8>
-  $<TARGET_OBJECTS:BertFP8Weight>
-  $<TARGET_OBJECTS:DecoderSelfAttentionFP8Layer>
-  $<TARGET_OBJECTS:FfnFP8Layer>
-  $<TARGET_OBJECTS:GptContextAttentionFP8Layer>
-  $<TARGET_OBJECTS:GptFP8>
-  $<TARGET_OBJECTS:GptFP8ContextDecoder>
-  $<TARGET_OBJECTS:GptFP8Decoder>
-  $<TARGET_OBJECTS:GptFP8DecoderLayerWeight>
-  $<TARGET_OBJECTS:GptFP8Weight>
-  $<TARGET_OBJECTS:SelfAttentionFP8Layer>
-  $<TARGET_OBJECTS:TensorParallelDecoderSelfAttentionFP8Layer>
-  $<TARGET_OBJECTS:TensorParallelGeluFfnFP8Layer>
-  $<TARGET_OBJECTS:TensorParallelGptContextAttentionFP8Layer>
-  $<TARGET_OBJECTS:activation_fp8_kernels>
-  $<TARGET_OBJECTS:cublasFP8MMWrapper>
-  $<TARGET_OBJECTS:cuda_fp8_utils>
-  $<TARGET_OBJECTS:fp8_qgmma_1x1_utils>
-  $<TARGET_OBJECTS:layernorm_fp8_kernels>
-  $<TARGET_OBJECTS:unfused_attention_fp8_kernels>
-)
-endif()
 
 set_target_properties(transformer-shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(transformer-shared PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 set_target_properties(transformer-shared PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(transformer-shared PUBLIC -L /fsx/binhtang/.local/miniconda3/envs/faster/lib -lcudart -lcublas -lcublasLt -lcurand)
+target_link_libraries(transformer-shared PUBLIC -lcudart -lcublas -lcublasLt -lcurand)
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/FasterTransformer)

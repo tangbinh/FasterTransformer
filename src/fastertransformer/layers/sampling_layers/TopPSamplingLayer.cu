@@ -148,6 +148,8 @@ void TopPSamplingLayer<T>::allocateBuffer(size_t batch_size, Tensor top_k, Tenso
         reinterpret_cast<float*>(allocator_->reMalloc(initial_top_p_buf_, sizeof(float) * batch_size, false));
     top_p_decay_buf_ =
         reinterpret_cast<float*>(allocator_->reMalloc(top_p_decay_buf_, sizeof(float) * batch_size, false));
+    cfg_weight_buf_ =
+        reinterpret_cast<float*>(allocator_->reMalloc(cfg_weight_buf_, sizeof(float) * batch_size, false));
     top_p_min_buf_ = reinterpret_cast<float*>(allocator_->reMalloc(top_p_min_buf_, sizeof(float) * batch_size, false));
     top_p_reset_ids_buf_ =
         reinterpret_cast<int32_t*>(allocator_->reMalloc(top_p_reset_ids_buf_, sizeof(int32_t) * batch_size, false));
@@ -173,6 +175,7 @@ void TopPSamplingLayer<T>::freeBuffer()
         allocator_->free((void**)(&runtime_top_p_buf_));
         allocator_->free((void**)(&initial_top_p_buf_));
         allocator_->free((void**)(&top_p_decay_buf_));
+        allocator_->free((void**)(&cfg_weight_buf_));
         allocator_->free((void**)(&top_p_min_buf_));
         allocator_->free((void**)(&top_p_reset_ids_buf_));
     }
@@ -225,6 +228,18 @@ void TopPSamplingLayer<T>::setup(const size_t batch_size, const size_t beam_widt
 
     dim3 block(std::min((int)batch_size, 256));
     dim3 grid(div_up((int)batch_size, (int)block.x));
+
+    const float default_cfg_weight = 1.0f;
+    Tensor      cfg_weight         = runtime_args->isExist("cfg_weight") ?
+                                          runtime_args->at("cfg_weight") :
+                                          Tensor(MEMORY_CPU, TYPE_FP32, {1}, &default_cfg_weight);
+    if (cfg_weight.size() == 1) {
+        float tp = cfg_weight.getVal<float>();
+        deviceFill(cfg_weight_buf_, batch_size, tp, stream_);
+    }
+    else {
+        cudaAutoCpy(cfg_weight_buf_, cfg_weight.getPtr<float>(), batch_size, stream_);
+    }
 
     const float*    top_p_decay     = runtime_args->getPtr<float>("top_p_decay", nullptr);
     const float*    top_p_min       = runtime_args->getPtr<float>("top_p_min", nullptr);
@@ -290,6 +305,13 @@ void TopPSamplingLayer<T>::runSampling(TensorMap* output_tensors, TensorMap* inp
         topp_id_vals_buf_, topp_offset_buf_, begin_topp_offset_buf_, local_batch_size, vocab_size_padded_, stream_);
     sync_check_cuda_error();
 
+    invokeMixCFGLogits(logits,
+                       cfg_weight_buf_ + ite * local_batch_size,
+                       vocab_size_padded_,
+                       local_batch_size,
+                       stream_);
+    sync_check_cuda_error();
+
     invokeAddBiasSoftMax(logits,
                          (T*)(nullptr),
                          input_tensors->at("end_id").getPtr<int>(),
@@ -326,7 +348,8 @@ void TopPSamplingLayer<T>::runSampling(TensorMap* output_tensors, TensorMap* inp
         runtime_top_p_buf_ + ite * local_batch_size,
         stream_,
         cuda_device_prop_,
-        skip_decode_buf_ + ite * local_batch_size);
+        skip_decode_buf_ + ite * local_batch_size,
+        cfg_weight_buf_ + ite * local_batch_size);
     sync_check_cuda_error();
 
     invokeComputeToppDecay(

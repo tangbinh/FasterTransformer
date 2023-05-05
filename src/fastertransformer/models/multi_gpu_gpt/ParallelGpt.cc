@@ -583,6 +583,7 @@ void ParallelGpt<T>::forward(std::unordered_map<std::string, Tensor>*       outp
     //      runtime_top_p [1] or [batch_size] on cpu, optional, float.
     //      beam_search_diversity_rate [1] or [batch_size] on cpu, optional, float.
     //      temperature [1] or [batch_size] on cpu, optional, float.
+    //      cfg_weight [1] or [batch_size] on cpu, optional, float.
     //      len_penalty [1] or [batch_size] on cpu, optional, float.
     //      repetition_penalty [1] or [batch_size] on cpu, optional, float.
     //      presence_penalty [1] or [batch_size] on cpu, optional, float.

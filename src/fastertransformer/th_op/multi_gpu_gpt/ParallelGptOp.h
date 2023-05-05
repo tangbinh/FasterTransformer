@@ -40,6 +40,7 @@ public:
                          th::optional<th::Tensor> top_p_opt,
                          th::optional<th::Tensor> beam_search_diversity_rate_opt,
                          th::optional<th::Tensor> temperature_opt,
+                         th::optional<th::Tensor> cfg_weight_opt,
                          th::optional<th::Tensor> len_penalty_opt,
                          th::optional<th::Tensor> repetition_penalty_opt,
                          th::optional<th::Tensor> presence_penalty_opt,
@@ -277,6 +278,7 @@ public:
                  th::optional<th::Tensor> top_p_opt,
                  th::optional<th::Tensor> beam_search_diversity_rate_opt,
                  th::optional<th::Tensor> temperature_opt,
+                 th::optional<th::Tensor> cfg_weight_opt,
                  th::optional<th::Tensor> len_penalty_opt,
                  th::optional<th::Tensor> repetition_penalty_opt,
                  th::optional<th::Tensor> presence_penalty_opt,
@@ -386,6 +388,10 @@ public:
         if (temperature_opt.has_value()) {
             input_tensors.insert(
                 {"temperature", convert_tensor<float>(temperature_opt.value(), ft::MemoryType::MEMORY_CPU)});
+        }
+        if (cfg_weight_opt.has_value()) {
+            input_tensors.insert(
+                {"cfg_weight", convert_tensor<float>(cfg_weight_opt.value(), ft::MemoryType::MEMORY_CPU)});
         }
         if (len_penalty_opt.has_value()) {
             input_tensors.insert(
@@ -534,6 +540,7 @@ public:
                                th::optional<th::Tensor> top_p_opt,
                                th::optional<th::Tensor> beam_search_diversity_rate_opt,
                                th::optional<th::Tensor> temperature_opt,
+                               th::optional<th::Tensor> cfg_weight_opt,
                                th::optional<th::Tensor> len_penalty_opt,
                                th::optional<th::Tensor> repetition_penalty_opt,
                                th::optional<th::Tensor> presence_penalty_opt,

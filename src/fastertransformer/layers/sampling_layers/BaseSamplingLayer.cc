@@ -59,7 +59,6 @@ void BaseSamplingLayer<T>::freeBuffer()
     if (is_allocate_buffer_) {
         allocator_->free((void**)(&curandstate_buf_));
         allocator_->free((void**)(&random_seeds_buf_));
-        allocator_->free((void**)(&temperature_buf_));
         allocator_->free((void**)(&repetition_penalty_buf_));
         allocator_->free((void**)(&min_lengths_buf_));
         allocator_->free((void**)(&runtime_logits_buf_));

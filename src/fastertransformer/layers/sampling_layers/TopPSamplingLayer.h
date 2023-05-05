@@ -36,6 +36,7 @@ private:
     float*   top_p_decay_buf_     = nullptr;
     float*   top_p_min_buf_       = nullptr;
     int32_t* top_p_reset_ids_buf_ = nullptr;
+    float*   cfg_weight_buf_     = nullptr;
 
     int*   topp_id_vals_buf_      = nullptr;
     int*   topp_offset_buf_       = nullptr;

@@ -691,7 +691,8 @@ public:
                                    top_ps,
                                    stream,
                                    &device_prop,
-                                   nullptr);
+                                   nullptr,
+                                   nullptr); // cfg_weight_buf
         void* workspace = allocator->malloc(workspace_size);
 
         // Initialize.
@@ -740,7 +741,8 @@ public:
                                        top_ps,
                                        stream,
                                        &device_prop,
-                                       skip_decode);
+                                       skip_decode,
+                                       nullptr);
 
             // Compute reference.
             cudaD2Hcpy(h_output_ids, output_ids + step * batch_size, batch_size);

@@ -397,6 +397,7 @@ void DynamicDecodeLayer<T>::forward(TensorMap* output_tensors, TensorMap* input_
              {"step", input_tensors->at("step")},
              {"max_input_length", input_tensors->at("max_input_length")},
              {"end_id", end_id.slice({local_batch_size}, ite * local_batch_size)},
+             {"cfg_weight", input_tensors->at("cfg_weight")},
              {"ite", Tensor{MEMORY_CPU, TYPE_INT32, {1}, &ite}}});
 
         if (input_tensors->isExist("embedding_bias")) {

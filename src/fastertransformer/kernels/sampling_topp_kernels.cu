@@ -890,7 +890,8 @@ __global__ void topp_sampling(T*             sorted_log_probs,
                               const float*   top_ps,
                               const int*     end_ids,
                               const int      batch_size,
-                              const bool*    skip_decode)
+                              const bool*    skip_decode,
+                              const float*   cfg_weight_buf)
 {
     __shared__ int   stop_shared;
     __shared__ float rand_num_s;
@@ -909,7 +910,11 @@ __global__ void topp_sampling(T*             sorted_log_probs,
 
     if (threadIdx.x == 0) {
         stop_shared = 0;
-        rand_num_s  = curand_uniform(curandstate + blockIdx.x) * prob_threshold;
+        int bid = blockIdx.x;
+        if ((cfg_weight_buf != nullptr) && (batch_id >= batch_size / 2)) {
+            bid = bid - batch_size / 2;
+        }
+        rand_num_s  = curand_uniform(curandstate + bid) * prob_threshold;
     }
 
     // if begin_offset_buf and offset_buf of sorting have same value,
@@ -1024,7 +1029,8 @@ void invokeBatchTopPSampling(void*           workspace,
                              const float*    top_ps,
                              cudaStream_t    stream,
                              cudaDeviceProp* cuda_device_prop,
-                             const bool*     skip_decode)
+                             const bool*     skip_decode,
+                             const float*    cfg_weight_buf)
 {
     // Here, we put batch size as an argument because the batch size of initialization
     // and inference may be different due to pipeline parallelism.
@@ -1157,7 +1163,8 @@ void invokeBatchTopPSampling(void*           workspace,
                                                                                     top_ps,
                                                                                     end_ids,
                                                                                     batch_size,
-                                                                                    skip_decode);
+                                                                                    skip_decode,
+                                                                                    cfg_weight_buf);
 }
 
 template void invokeBatchTopPSampling(void*           workspace,
@@ -1180,7 +1187,8 @@ template void invokeBatchTopPSampling(void*           workspace,
                                       const float*    top_ps,
                                       cudaStream_t    stream,
                                       cudaDeviceProp* cuda_device_prop,
-                                      const bool*     skip_decode);
+                                      const bool*     skip_decode,
+                                      const float*   cfg_weight_buf);
 
 template void invokeBatchTopPSampling(void*           workspace,
                                       size_t&         workspace_size,
@@ -1202,7 +1210,8 @@ template void invokeBatchTopPSampling(void*           workspace,
                                       const float*    top_ps,
                                       cudaStream_t    stream,
                                       cudaDeviceProp* cuda_device_prop,
-                                      const bool*     skip_decode);
+                                      const bool*     skip_decode,
+                                      const float*   cfg_weight_buf);
 
 template<typename T>
 void invokeTopPSampling(void*           workspace,
@@ -1246,7 +1255,8 @@ void invokeTopPSampling(void*           workspace,
                             nullptr,
                             stream,
                             cuda_device_prop,
-                            skip_decode);
+                            skip_decode,
+                            nullptr);
 }
 
 template void invokeTopPSampling(void*           workspace,
@@ -1377,6 +1387,52 @@ template void invokeAddBiasSoftMax(half*        logits,
                                    const int    n_padded,
                                    const int    n,
                                    cudaStream_t stream);
+
+template<typename T>
+__global__ void
+mixCFGLogits(T* logits, const float* cfg_weight, const int vocab_size_padded, const int batch_size)
+{
+    // if (blockIdx.x == 0 && threadIdx.x == 0) {
+    //     printf("cfg_weight = %4.2f\n", cfg_weight[0]);
+    // }
+    int bid = blockIdx.x;
+    int offset = bid * vocab_size_padded;
+    int aux_offset = (bid + batch_size / 2) * vocab_size_padded;
+    for (int tid = threadIdx.x; tid < vocab_size_padded; tid += blockDim.x) {
+        if (bid < batch_size / 2) {
+            T mixed = logits[aux_offset + tid] + (T)cfg_weight[bid] * (logits[offset + tid] - logits[aux_offset + tid]);
+            if (!isnan((float) mixed)) {
+                logits[offset + tid] = mixed;
+                logits[aux_offset + tid] = mixed;
+            }
+        }
+    }
+}
+
+template<typename T>
+void invokeMixCFGLogits(T* logits,
+                        const float* cfg_weight,
+                        const int vocab_size_padded,
+                        const int batch_size,
+                        cudaStream_t stream)
+{
+    dim3 grid(batch_size);
+    dim3 block(min(vocab_size_padded, 1024));
+    /*n is the vocab_size, e.g., 30000, 7000.... vocab_size is usually very big. */
+    mixCFGLogits<<<grid, block, 0, stream>>>(logits, cfg_weight, vocab_size_padded, batch_size);
+}
+
+template void invokeMixCFGLogits(float* logits,
+                                 const float* cfg_weight,
+                                 const int vocab_size_padded,
+                                 const int batch_size,
+                                 cudaStream_t stream);
+
+template void invokeMixCFGLogits(half* logits,
+                                 const float* cfg_weight,
+                                 const int vocab_size_padded,
+                                 const int batch_size,
+                                 cudaStream_t stream);
 
 __global__ void computeToppDecay(float*         runtime_top_p,
                                  const float*   runtime_initial_top_p,

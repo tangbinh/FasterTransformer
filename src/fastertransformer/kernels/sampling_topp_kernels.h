@@ -69,7 +69,8 @@ void invokeBatchTopPSampling(void*           workspace,
                              const float*    top_ps,
                              cudaStream_t    stream,
                              cudaDeviceProp* cuda_device_prop,
-                             const bool*     skip_decode);
+                             const bool*     skip_decode,
+                             const float*   cfg_weight_buf);
 
 template<typename T>
 void invokeAddBiasSoftMax(T*           logits,
@@ -81,6 +82,12 @@ void invokeAddBiasSoftMax(T*           logits,
                           const int    n,
                           cudaStream_t stream);
 
+template<typename T>
+void invokeMixCFGLogits(T*           logits,
+                        const float*     cfg_weight,
+                        const int    vocab_size_padded,
+                        const int    batch_size,
+                        cudaStream_t stream);                        
 namespace segmented_topp_impl {
 enum DType_t {
     kFLOAT,
